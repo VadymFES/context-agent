@@ -1,6 +1,11 @@
 import sys
+import time
+from datetime import datetime
+from pathlib import Path
 from dotenv import load_dotenv
 load_dotenv()
+
+SUMMARIES_DIR = Path(__file__).parent / "data" / "summaries"
 
 from storage import get_conn, get_active_goals, save_moment, add_goal, search
 from capture import capture_screen
@@ -47,6 +52,46 @@ def _clear_all():
     _session["all_goal_info"].clear()
 
 
+def _write_txt(final: dict, title: str, ts: int):
+    SUMMARIES_DIR.mkdir(parents=True, exist_ok=True)
+    dt = datetime.fromtimestamp(ts).strftime("%Y-%m-%d_%H-%M-%S")
+    ai_title = final.get("title", "").strip()
+    if ai_title:
+        safe = "".join(c if c.isalnum() or c in " -_" else "" for c in ai_title)
+        safe = safe.strip().replace(" ", "_")[:60]
+        filename = f"{dt}_{safe}.txt"
+    else:
+        filename = f"{dt}.txt"
+    path = SUMMARIES_DIR / filename
+
+    lines = [
+        f"Session: {title}",
+        f"Date:    {datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')}",
+        "",
+    ]
+    if final.get("summary"):
+        lines += ["SUMMARY", "-------", final["summary"], ""]
+    if final.get("main_ideas"):
+        lines += ["MAIN IDEAS", "----------"]
+        lines += [f"- {idea}" for idea in final["main_ideas"]]
+        lines.append("")
+    if final.get("important_notes"):
+        lines += ["IMPORTANT NOTES", "---------------"]
+        lines += [f"- {note}" for note in final["important_notes"]]
+        lines.append("")
+    if final.get("recommendations"):
+        lines += ["RECOMMENDATIONS", "---------------"]
+        lines += [f"- {rec}" for rec in final["recommendations"]]
+        lines.append("")
+    if final.get("links"):
+        lines += ["LINKS", "-----"]
+        lines += [f"- {link}" for link in final["links"]]
+        lines.append("")
+
+    path.write_text("\n".join(lines), encoding="utf-8")
+    print(f"[session] Saved to {path}")
+
+
 def _display_and_save(final: dict, title: str, app: str, matched: list, normalized: str):
     summary_text = final.get("summary", "")
     if final.get("main_ideas"):
@@ -56,7 +101,9 @@ def _display_and_save(final: dict, title: str, app: str, matched: list, normaliz
     if final.get("recommendations"):
         summary_text += "\nRecommendations: " + "; ".join(final["recommendations"])
 
+    ts = int(time.time())
     save_moment(conn, title, app, normalized, matched, summary_text, final.get("links", []))
+    _write_txt(final, title, ts)
 
     if final.get("summary"):
         print(f"[session] {final['summary']}")
