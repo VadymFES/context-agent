@@ -110,6 +110,7 @@ def summarize(raw_text: str, title: str, goal_info: list[dict] | None = None) ->
                     "Respond with JSON only, no markdown:\n"
                     "{\n"
                     '  "relevant": true,\n'
+                    '  "title": "short descriptive title for this session (5-8 words, no punctuation)",\n'
                     '  "summary": "3-5 sentences about what the user was doing related to the goal",\n'
                     '  "main_ideas": ["every key concept or fact related to the goal topic"],\n'
                     '  "important_notes": ["critical details or warnings related to the goal"],\n'
@@ -169,6 +170,7 @@ def merge_summaries(summaries: list[dict], title: str) -> dict:
                     + "\n\n".join(parts) +
                     "\n\nRespond with JSON only, no markdown:\n"
                     "{\n"
+                    '  "title": "short descriptive title for this session (5-8 words, no punctuation)",\n'
                     '  "summary": "3-5 sentences describing the overall session",\n'
                     '  "main_ideas": ["all consolidated key concepts and facts"],\n'
                     '  "important_notes": ["all critical details worth remembering"],\n'
