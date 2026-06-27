@@ -4,7 +4,7 @@ import win32process
 import psutil
 
 
-def get_active_window() -> tuple[str, str]:
+def get_active_window() -> tuple[str, str, int]:
     hwnd = win32gui.GetForegroundWindow()
     title = win32gui.GetWindowText(hwnd)
 
@@ -14,17 +14,17 @@ def get_active_window() -> tuple[str, str]:
     except Exception:
         app = "unknown"
 
-    return title, app
+    return title, app, hwnd
 
 
 def watch(on_change, interval: float = 0.5):
     last_title = ""
 
     while True:
-        title, app = get_active_window()
+        title, app, hwnd = get_active_window()
 
         if title and title != last_title:
             last_title = title
-            on_change(title, app)
+            on_change(title, app, hwnd)
 
         time.sleep(interval)
